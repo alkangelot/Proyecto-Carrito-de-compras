@@ -4,8 +4,18 @@ import Header from "./components/Header"
 import { db } from './data/db'
 
 function App() {
-    const [data, setData] = useState(db)
-    const [cart, setCart] = useState([])
+    const initialCart = () =>{
+        const localStorageCart = localStorage.getItem('cart')
+        return localStorageCart ? JSON.parse(localStorageCart) : []
+    }
+    const [data] = useState(db)
+    const [cart, setCart] = useState(initialCart)
+    const min_items = 1
+    const max_items = 5
+
+    useEffect(() => {
+        localStorage.setItem('cart', JSON.stringify(cart))
+    }, [cart])
 
     function addToCart(item){
         const itemExist = cart.findIndex((guitar) => guitar.id === item.id)
@@ -13,7 +23,7 @@ function App() {
             item.quantity = 1
             setCart([...cart, item])
         } else {
-            console.log('Ya existe');
+            if(cart[itemExist].quantity >= max_items) return
             const updateCart = [...cart]
             updateCart[itemExist].quantity++
             setCart(updateCart)
@@ -26,7 +36,7 @@ function App() {
 
     function increaseQuantity(id){
         const updateCart = cart.map( item => {
-            if(item.id === id){
+            if(item.id === id && item.quantity < max_items){
                 return {
                     ...item,
                     quantity: item.quantity +1
@@ -38,12 +48,32 @@ function App() {
         setCart(updateCart)
     }
 
+    function decreaseQuantity(id){
+        const updateCart = cart.map( item => {
+            if(item.id === id && item.quantity > min_items){
+                return {
+                    ...item,
+                    quantity: item.quantity - 1
+                }
+
+            }
+            return item
+        })
+        setCart(updateCart)
+    }
+
+    function clearCart(){
+        setCart([])
+    }
+
 return (
     <>
     <Header
         cart={cart}
         removeFromCart={removeFromCart}
         increaseQuantity={increaseQuantity}
+        decreaseQuantity={decreaseQuantity}
+        clearCart={clearCart}
     />
     <main className="container-xl mt-5">
         <h2 className="text-center">Nuestra Colección</h2>
